@@ -96,3 +96,39 @@ m.fs.properties = MCASParameterBlock(
 )
 
 # define the unit model
+m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
+
+# fix the inlet flow rates
+# kept all values from the WaterTAP test.py for now
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.429868)
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.429868)
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "H2O"].fix(47.356)
+
+# fix the inlet fstate variables
+# kept all values from the WaterTAP test.py for now
+m.fs.unit.inlet.temperature[0].fix(298.15)
+m.fs.unit.inlet.pressure[0].fix(4e5)
+
+# fix the membrane properties, typical for DSPM-DE
+# kept all values from the WaterTAP test.py for now
+m.fs.unit.radius_pore.fix(0.5e-9)
+m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
+m.fs.unit.membrane_charge_density.fix(-27)
+m.fs.unit.dielectric_constant_pore.fix(41.3)
+
+# fix final permeate pressure to be approx atmospheric
+m.fs.unit.mixed_permeate[0].pressure.fix(101325)
+
+# fix system values
+# kept all values from the WaterTAP test.py for now
+m.fs.unit.spacer_porosity.fix(0.85)
+m.fs.unit.channel_height.fix(5e-4)
+m.fs.unit.velocity[0, 0].fix(0.25)
+m.fs.unit.area.fix(50)
+
+# fix additional variables for calculating mass transfer coefficient with spiral wound correlation
+m.fs.unit.spacer_mixing_efficiency.fix()
+m.fs.unit.spacer_mixing_length.fix()
+
+# check the DOF
+(m, fail_flag = True)
