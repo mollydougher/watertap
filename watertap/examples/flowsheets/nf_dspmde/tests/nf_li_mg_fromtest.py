@@ -100,8 +100,8 @@ m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
 # fix the inlet flow rates
 # kept all values from the WaterTAP test.py for now
-m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.429868)
-m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.429868)
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Li_+"].fix(0.429868)
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Mg_2+"].fix(0.429868)
 m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "H2O"].fix(47.356)
 
 # fix the inlet fstate variables
@@ -132,3 +132,29 @@ m.fs.unit.spacer_mixing_length.fix()
 
 # check the DOF
 check_dof(m, fail_flag = True)
+
+# scaling, using same method as WaterTAP test.py for now
+m.fs.properties.set_default_scaling(
+    "flow_mol_phase_comp", 1e2, index = ("Liq", "Li_+")
+)
+m.fs.properties.set_default_scaling(
+    "flow_mol_phase_comp", 1e2, index = ("Liq", "Mg_2+")
+)
+m.fs.properties.set_default_scaling(
+    "flow_mol_phase_comp", 1e0, index = ("Liq", "H2O")
+)
+# calculate the scaling factors
+calculate_scaling_factors(m)
+# check that all variables have scaling factors
+unscaled_var_list = list(unscaled_variables_generator(m.fs.unit))
+assert len(unscaled_var_list) == 0
+# Expect only flux_mol_phase_comp to be poorly scaled, as we have not
+# calculated correct values just yet.
+for var in list(badly_scaled_var_generator(m.fs.unit)):
+    assert "flux_mol_phase_comp" in var[0].name
+
+# initialize model
+initialization_tester(m)
+
+# solve model
+results = solver.solve(m)
