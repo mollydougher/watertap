@@ -131,4 +131,4 @@ m.fs.unit.spacer_mixing_efficiency.fix()
 m.fs.unit.spacer_mixing_length.fix()
 
 # check the DOF
-(m, fail_flag = True)
+check_dof(m, fail_flag = True)
