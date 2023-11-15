@@ -36,6 +36,7 @@ from watertap.property_models.multicomp_aq_sol_prop_pack import (
     DensityCalculation,
     MCASStateBlock,
 )
+from watertap.unit_models.pressure_changer import Pump
 from watertap.unit_models.nanofiltration_DSPMDE_0D import (
     NanofiltrationDSPMDE0D,
     MassTransferCoefficient,
@@ -120,7 +121,8 @@ m.fs.feed = Feed(property_package=m.fs.properties)
 m.fs.product = Product(property_package=m.fs.properties)
 m.fs.disposal = Product(property_package=m.fs.properties)
 
-# define the unit model
+# define unit models
+m.fs.pump = Pump(property_package=m.fs.properties)
 m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
 # fix the inlet flow rates
