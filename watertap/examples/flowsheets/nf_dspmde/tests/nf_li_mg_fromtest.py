@@ -70,30 +70,35 @@ m.fs = FlowsheetBlock(dynamic = False)
 
 # define the propery model
 m.fs.properties = MCASParameterBlock(
-    solute_list = ["Li_+", "Mg_2+"],
+    # need to add Cl- for electroneutrality, assume LiCl and MgCl2 salts
+    solute_list = ["Li_+", "Mg_2+","Cl_-"],
     # https://www.aqion.de/site/diffusion-coefficients
     # very confident
     diffusivity_data = {
         ("Liq","Li_+"): 1.03e-09,
-        ("Liq","Mg_2+"): 0.075e-09
+        ("Liq","Mg_2+"): 0.075e-09,
+        ("Liq","Cl_-"): 2.03e-09
     },
     # very confident
     mw_data = {
         "H2O": 0.018,
         "Li_+": 0.0069,
-        "Mg_2+": 0.024
+        "Mg_2+": 0.024,
+        "Cl_-": 0.035
     },
     # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
     # medium confident, these values come from above review paper, averaged values from multiple studies
     # reasonable orders of magnitude
     stokes_radius_data = {
         "Li_+": 3.61e-10,
-        "Mg_2+": 4.07e-10
+        "Mg_2+": 4.07e-10,
+        "Cl_-": 3.28e-10
     },
     # very confident
     charge = {
         "Li_+": 1,
-        "Mg_2+": 2
+        "Mg_2+": 2,
+        "Cl_-": -1
     },
     # choose ideal for now, other option is davies
     activity_coefficient_model=ActivityCoefficientModel.ideal,
@@ -107,6 +112,7 @@ m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 # kept all values from the WaterTAP test.py for now
 m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Li_+"].fix(0.429868)
 m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Mg_2+"].fix(0.429868)
+m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.429868)
 m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "H2O"].fix(47.356)
 
 # fix the inlet fstate variables
@@ -146,6 +152,9 @@ m.fs.properties.set_default_scaling(
     "flow_mol_phase_comp", 1e2, index = ("Liq", "Mg_2+")
 )
 m.fs.properties.set_default_scaling(
+    "flow_mol_phase_comp", 1e2, index = ("Liq", "Cl_-")
+)
+m.fs.properties.set_default_scaling(
     "flow_mol_phase_comp", 1e0, index = ("Liq", "H2O")
 )
 # calculate the scaling factors
@@ -163,11 +172,11 @@ for var in list(badly_scaled_var_generator(m.fs.unit)):
 # dt.report_structural_issues()
 
 # initialize model
-# initialization_tester(m)
+initialization_tester(m)
 
-from idaes.core.util.model_diagnostics import DiagnosticsToolbox
-dt = DiagnosticsToolbox(m)
-dt.report_numerical_issues()
+# from idaes.core.util.model_diagnostics import DiagnosticsToolbox
+# dt = DiagnosticsToolbox(m)
+# dt.report_numerical_issues()
 
 # solve model
-#results = solver.solve(m)
+results = solver.solve(m)
