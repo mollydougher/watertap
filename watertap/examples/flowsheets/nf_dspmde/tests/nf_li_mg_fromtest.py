@@ -72,20 +72,25 @@ m.fs = FlowsheetBlock(dynamic = False)
 m.fs.properties = MCASParameterBlock(
     solute_list = ["Li_+", "Mg_2+"],
     # https://www.aqion.de/site/diffusion-coefficients
+    # very confident
     diffusivity_data = {
         ("Liq","Li_+"): 1.03e-09,
         ("Liq","Mg_2+"): 0.075e-09
     },
+    # very confident
     mw_data = {
         "H2O": 0.018,
         "Li_+": 0.0069,
         "Mg_2+": 0.024
     },
     # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
+    # medium confident, these values come from above review paper, averaged values from multiple studies
+    # reasonable orders of magnitude
     stokes_radius_data = {
         "Li_+": 3.61e-10,
         "Mg_2+": 4.07e-10
     },
+    # very confident
     charge = {
         "Li_+": 1,
         "Mg_2+": 2
@@ -153,8 +158,16 @@ assert len(unscaled_var_list) == 0
 for var in list(badly_scaled_var_generator(m.fs.unit)):
     assert "flux_mol_phase_comp" in var[0].name
 
+# from idaes.core.util.model_diagnostics import DiagnosticsToolbox
+# dt = DiagnosticsToolbox(m)
+# dt.report_structural_issues()
+
 # initialize model
-initialization_tester(m)
+# initialization_tester(m)
+
+from idaes.core.util.model_diagnostics import DiagnosticsToolbox
+dt = DiagnosticsToolbox(m)
+dt.report_numerical_issues()
 
 # solve model
-results = solver.solve(m)
+#results = solver.solve(m)
