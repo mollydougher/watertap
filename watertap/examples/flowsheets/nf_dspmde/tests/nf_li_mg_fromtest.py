@@ -58,7 +58,7 @@ from idaes.core.util.scaling import (
 )
 from idaes.core.util.initialization import propagate_state
 from idaes.models.unit_models import (
-    Feed,
+    Feed, Product
 )
 
 # define the default solver
@@ -115,6 +115,10 @@ property_kwds = {
 m.fs.properties = MCASParameterBlock(**property_kwds)
 #density_calculation=DensityCalculation.constant
 
+# add feed, product, and disposal blocks
+m.fs.feed = Feed(property_package=m.fs.properties)
+m.fs.product = Product(property_package=m.fs.properties)
+m.fs.disposal = Product(property_package=m.fs.properties)
 
 # define the unit model
 m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
