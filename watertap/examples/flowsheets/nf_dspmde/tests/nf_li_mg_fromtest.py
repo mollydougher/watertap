@@ -125,6 +125,13 @@ m.fs.disposal = Product(property_package=m.fs.properties)
 m.fs.pump = Pump(property_package=m.fs.properties)
 m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
+# connect the units
+m.fs.feed_to_pump = Arc(source=m.fs.feed.outlet, destination=m.fs.pump.inlet)
+m.fs.pump_to_nf = Arc(source=m.fs.pump.outlet, destination=m.fs.unit.inlet)
+m.fs.nf_to_product = Arc(source=m.fs.unit.permeate, destination=m.fs.product.inlet)
+m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
+TransformationFactory("network.expand_arcs").apply_to(m)
+
 # fix the inlet flow rates
 # kept all values from the WaterTAP test.py for now
 m.fs.unit.inlet.flow_mol_phase_comp[0, "Liq", "Li_+"].fix(0.429868)
