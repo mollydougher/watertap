@@ -149,7 +149,7 @@ def build():
     # fix the inlet fstate variables
     # kept all values from the WaterTAP test.py for now
     m.fs.unit.inlet.temperature[0].fix(298.15)
-    m.fs.unit.inlet.pressure[0].fix(4e5)
+    m.fs.unit.inlet.pressure[0].fix(2e5)
 
     # fix the membrane properties, typical for DSPM-DE
     # kept all values from the WaterTAP test.py for now
