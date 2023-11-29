@@ -133,11 +133,11 @@ def build():
     m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
     # fix the inlet flow rates
-    # kept all values from the WaterTAP test.py for now
-    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Li_+"].fix(0.429868)
-    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Mg_2+"].fix(0.429868)
-    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Cl_-"].fix(0.429868)
-    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "H2O"].fix(47.356)
+    # approximate the values of Salar de Atacama (Cl- overridden)
+    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Li_+"].fix(0.172)
+    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Mg_2+"].fix(0.305)
+    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Cl_-"].fix(0.42)
+    m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "H2O"].fix(47)
 
     # assert electroneutrality
     m.fs.unit.feed_side.properties_in[0.0].assert_electroneutrality(
