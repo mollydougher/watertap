@@ -7,7 +7,6 @@
 #
 # https://github.com/watertap-org/watertap/blob/main/tutorials/nawi_spring_meeting2023.ipynb
 ####################################################################
-
 # import statements
 import numpy as np
 from math import log
@@ -58,8 +57,11 @@ from idaes.core.util.scaling import (
 )
 from idaes.core.util.initialization import propagate_state
 from idaes.models.unit_models import (
-    Feed
+    Feed,
 )
+
+import numpy as np
+
 
 # main function from Alex Dudchenko
 def main():
@@ -127,8 +129,7 @@ def build():
         density_calculation=DensityCalculation.constant,
     )
 
-    # define unit models
-    # m.fs.pump = Pump(property_package=m.fs.properties)
+    # define unit model
     m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
     # fix the inlet flow rates
@@ -147,8 +148,8 @@ def build():
 
     # fix the inlet fstate variables
     # kept all values from the WaterTAP test.py for now
-    m.fs.feed.properties[0].temperature.fix(298.15)
-    m.fs.feed.properties[0].pressure.fix(4e5)
+    m.fs.unit.inlet.temperature[0].fix(298.15)
+    m.fs.unit.inlet.pressure[0].fix(4e5)
 
     # fix the membrane properties, typical for DSPM-DE
     # kept all values from the WaterTAP test.py for now
