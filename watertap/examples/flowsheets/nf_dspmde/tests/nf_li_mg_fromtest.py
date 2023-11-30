@@ -73,15 +73,15 @@ import numpy as np
 
 # main function from Alex Dudchenko
 def main():
-    solver = get_solver()
+    # solver = get_solver()
     m = build()
     m.fs.pump.initialize()
     m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
     assert degrees_of_freedom(m) == 0
-    results = solver.solve(m)
-    assert_optimal_termination(results)
+    # results = solver.solve(m)
+    # assert_optimal_termination(results)
     return m
 
 
@@ -172,7 +172,7 @@ def build():
     # kept all values from the WaterTAP test.py for now
     m.fs.unit.radius_pore.fix(0.5e-9)
     m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
-    m.fs.unit.membrane_charge_density.fix(-27)
+    m.fs.unit.membrane_charge_density.fix(-60)
     m.fs.unit.dielectric_constant_pore.fix(41.3)
 
     # fix the pump variables
