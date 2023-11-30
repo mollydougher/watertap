@@ -137,6 +137,13 @@ def build():
     m.fs.pump = Pump(property_package = m.fs.properties)
     m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
 
+    # connect the streams and blocks
+    m.fs.feed_to_pump = Arc(source=m.fs.feed.outlet, destination=m.fs.pump.inlet)
+    m.fs.pump_to_nf = Arc(source=m.fs.pump.outlet, destination=m.fs.unit.inlet)
+    m.fs.nf_to_product = Arc(source=m.fs.unit.permeate, destination=m.fs.product.inlet)
+    m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
+    TransformationFactory("network.expand_arcs").apply_to(m)
+
     # fix the inlet flow rates
     # approximate the values of Salar de Atacama (Cl- overridden)
     m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Li_+"].fix(0.172)
