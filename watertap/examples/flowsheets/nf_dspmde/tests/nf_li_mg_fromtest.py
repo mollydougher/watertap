@@ -169,6 +169,10 @@ def build():
     m.fs.unit.membrane_charge_density.fix(-27)
     m.fs.unit.dielectric_constant_pore.fix(41.3)
 
+    # fix the pump variables
+    m.fs.pump.efficiency_pump[0].fix(0.75)
+    m.fs.pump.outlet.pressure[0].fix(2e5)
+
     # fix final permeate pressure to be approx atmospheric
     m.fs.unit.mixed_permeate[0].pressure.fix(101325)
 
