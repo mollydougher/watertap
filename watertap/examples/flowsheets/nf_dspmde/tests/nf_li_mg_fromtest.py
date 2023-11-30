@@ -85,6 +85,45 @@ def main():
     return m
 
 
+def feed_properties():
+    property_kwds = {
+        # need to add Cl- for electroneutrality, assume LiCl and MgCl2 salts
+        "solute_list": ["Li_+","Mg_2+","Cl_-"],
+        # https://www.aqion.de/site/diffusion-coefficients
+        # very confident
+        "diffusivity_data": {
+            ("Liq","Li_+"): 1.03e-09,
+            ("Liq","Mg_2+"): 0.705e-09,
+            ("Liq","Cl_-"): 2.03e-09
+        },
+        # very confident
+        "mw_data": {
+            "H2O": 0.018,
+            "Li_+": 0.0069,
+            "Mg_2+": 0.024,
+            "Cl_-": 0.035
+        },
+        # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
+        # medium confident, these values come from above review paper, averaged values from multiple studies
+        # reasonable orders of magnitude
+        "stokes_radius_data": {
+            "Cl_-": 0.121e-9,
+            "Li_+": 3.61e-10,
+            "Mg_2+": 4.07e-10,
+            #"Cl_-": 3.28e-10
+        },
+        # very confident
+        "charge": {
+            "Li_+": 1,
+            "Mg_2+": 2,
+            "Cl_-": -1
+        },
+        # choose ideal for now, other option is davies
+        "activity_coeficcient_model":ActivityCoefficientModel.ideal,
+        "density_calculation": DensityCalculation.constant
+    }
+
+
 def build():
     # create the model
     m = ConcreteModel()
@@ -93,46 +132,7 @@ def build():
     m.fs = FlowsheetBlock(dynamic = False)
 
     # define the propery model
-    m.fs.properties = MCASParameterBlock(
-         # need to add Cl- for electroneutrality, assume LiCl and MgCl2 salts
-        solute_list = ["Li_+","Mg_2+","Cl_-"],
-
-        # https://www.aqion.de/site/diffusion-coefficients
-        # very confident
-         diffusivity_data=  {
-            ("Liq","Li_+"): 1.03e-09,
-            ("Liq","Mg_2+"): 0.705e-09,
-            ("Liq","Cl_-"): 2.03e-09
-        }, 
-
-        # very confident
-        mw_data = {
-            "H2O": 0.018,
-            "Li_+": 0.0069,
-            "Mg_2+": 0.024,
-            "Cl_-": 0.035
-        },
-
-        # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
-        # medium confident, these values come from above review paper, averaged values from multiple studies
-        # reasonable orders of magnitude
-        stokes_radius_data = {
-            "Cl_-": 0.121e-9,
-            "Li_+": 3.61e-10,
-            "Mg_2+": 4.07e-10,
-            #"Cl_-": 3.28e-10
-        },
-
-        # very confident
-        charge = {
-            "Li_+": 1,
-            "Mg_2+": 2,
-            "Cl_-": -1
-        },
-        # choose ideal for now, other option is davies
-        activity_coefficient_model=ActivityCoefficientModel.ideal,
-        density_calculation=DensityCalculation.constant,
-    )
+    m.fs.properties = MCASParameterBlock(**feed_properties)
 
     # add the feed and product streams
     m.fs.feed = Feed(property_package = m.fs.properties)
