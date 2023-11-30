@@ -5,6 +5,9 @@
 # watertap > unit_models > tests > test_nanofiltration_DSPMDE_0D.py
 # test defined as test_pressure_recovery_step_2_ions()
 #
+# also used the following flowsheet as a reference
+# watertap > examples > flowsheets > nf_dspmde > nf.py
+#
 # https://github.com/watertap-org/watertap/blob/main/tutorials/nawi_spring_meeting2023.ipynb
 ####################################################################
 # import statements
@@ -65,19 +68,11 @@ import numpy as np
 
 # main function from Alex Dudchenko
 def main():
-    for k in np.linspace(1, 10, 100):
-        try:
-            m = build()
-            # inlet_pressure = (
-            #     m.fs.unit.feed_side.properties_in[0.0].pressure_osm_phase["Liq"].value
-            # )
-            m.fs.unit.inlet.pressure[0].fix(k * 1e5)
-            m.fs.unit.initialize()
-            print("init_okay", k)
-            m.fs.unit.report()
-            break
-        except:
-            pass
+    m = build()
+    m.fs.unit.initialize()
+    print("init_okay")
+    m.fs.unit.report()
+    return m
 
 
 def build():
@@ -147,7 +142,6 @@ def build():
     )
 
     # fix the inlet fstate variables
-    # kept all values from the WaterTAP test.py for now
     m.fs.unit.inlet.temperature[0].fix(298.15)
     m.fs.unit.inlet.pressure[0].fix(2e5)
 
