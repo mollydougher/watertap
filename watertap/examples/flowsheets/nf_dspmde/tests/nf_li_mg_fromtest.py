@@ -61,6 +61,7 @@ from idaes.core.util.scaling import (
 from idaes.core.util.initialization import propagate_state
 from idaes.models.unit_models import (
     Feed,
+    Product
 )
 
 import numpy as np
@@ -123,6 +124,11 @@ def build():
         activity_coefficient_model=ActivityCoefficientModel.ideal,
         density_calculation=DensityCalculation.constant,
     )
+
+    # add the feed and product streams
+    m.fs.feed = Feed(property_package = m.fs.properties)
+    m.fs.product = Product(property_package = m.fs.properties)
+    m.fs.disposal = Product(property_package = m.fs.properties)
 
     # define unit model
     m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
