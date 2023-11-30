@@ -47,6 +47,7 @@ from watertap.unit_models.nanofiltration_DSPMDE_0D import (
     ConcentrationPolarizationType,
 )
 from watertap.core.util.initialization import check_dof
+from idaes.core.util.model_statistics import degrees_of_freedom
 
 from idaes.core.solvers import get_solver
 from idaes.core.util.model_statistics import (
@@ -72,10 +73,15 @@ import numpy as np
 
 # main function from Alex Dudchenko
 def main():
+    solver = get_solver()
     m = build()
+    m.fs.pump.initialize()
     m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
+    assert degrees_of_freedom(m) == 0
+    results = solver.solve(m)
+    assert_optimal_termination(results)
     return m
 
 
