@@ -17,6 +17,7 @@ import idaes.logger as idaeslog
 from pyomo.environ import (
     ConcreteModel,
     Constraint,
+    Objective,
     value,
     Var,
     units as pyunits,
@@ -79,6 +80,8 @@ def main():
     m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
+    # add an objective
+    m.fs.recovery_obj = Objective(expr = m.fs.unit.recovery_vol_phase[0.0, "Liq"].value)
     # assert degrees_of_freedom(m) == 0
     simulation_results = solver.solve(m)
     assert_optimal_termination(simulation_results)
