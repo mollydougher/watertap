@@ -80,8 +80,8 @@ def main():
     print("init_okay")
     m.fs.unit.report()
     assert degrees_of_freedom(m) == 0
-    # results = solver.solve(m)
-    # assert_optimal_termination(results)
+    # simulation_results = solver.solve(m)
+    # assert_optimal_termination(simulation_results)
     return m
 
 
@@ -119,9 +119,10 @@ def feed_properties():
             "Cl_-": -1
         },
         # choose ideal for now, other option is davies
-        "activity_coeficcient_model":ActivityCoefficientModel.ideal,
+        "activity_coefficient_model":ActivityCoefficientModel.ideal,
         "density_calculation": DensityCalculation.constant
     }
+    return property_kwds
 
 
 def build():
@@ -132,7 +133,8 @@ def build():
     m.fs = FlowsheetBlock(dynamic = False)
 
     # define the propery model
-    m.fs.properties = MCASParameterBlock(**feed_properties)
+    property_kwds = feed_properties()
+    m.fs.properties = MCASParameterBlock(**property_kwds)
 
     # add the feed and product streams
     m.fs.feed = Feed(property_package = m.fs.properties)
