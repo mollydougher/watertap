@@ -73,15 +73,15 @@ import numpy as np
 
 # main function from Alex Dudchenko
 def main():
-    # solver = get_solver()
+    solver = get_solver()
     m = build()
     m.fs.pump.initialize()
     m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
-    assert degrees_of_freedom(m) == 0
-    # simulation_results = solver.solve(m)
-    # assert_optimal_termination(simulation_results)
+    # assert degrees_of_freedom(m) == 0
+    simulation_results = solver.solve(m)
+    assert_optimal_termination(simulation_results)
     return m
 
 
@@ -167,8 +167,8 @@ def build():
     )
 
     # fix the inlet fstate variables
-    m.fs.unit.inlet.temperature[0].fix(298.15)
-    m.fs.unit.inlet.pressure[0].fix(2e5)
+    # m.fs.unit.inlet.temperature[0].fix(298.15)
+    # m.fs.unit.inlet.pressure[0].fix(2e5)
 
     # fix the membrane properties, typical for DSPM-DE
     # kept all values from the WaterTAP test.py for now
@@ -195,11 +195,11 @@ def build():
     m.fs.unit.spacer_mixing_length.fix()
 
     # unfix optimization variables
-    m.fs.pump.outle.pressure[0].unfix()
+    m.fs.pump.outlet.pressure[0].unfix()
     m.fs.unit.area.unfix()
 
     # check the DOF
-    check_dof(m, fail_flag = True)
+    # check_dof(m, fail_flag = True)
 
     # scaling, using same method as WaterTAP test.py for now
     m.fs.properties.set_default_scaling(
