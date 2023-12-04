@@ -194,6 +194,10 @@ def build():
     m.fs.unit.spacer_mixing_efficiency.fix()
     m.fs.unit.spacer_mixing_length.fix()
 
+    # unfix optimization variables
+    m.fs.pump.outle.pressure[0].unfix()
+    m.fs.unit.area.unfix()
+
     # check the DOF
     check_dof(m, fail_flag = True)
 
