@@ -80,8 +80,10 @@ def main():
     m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
-    # add an objective
-    m.fs.recovery_obj = Objective(expr = m.fs.unit.recovery_vol_phase[0.0, "Liq"].value)
+    # add an objective, maximize Mg rejection
+    m.fs.recovery_obj = Objective(
+        expr = -(m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Mg_2+"])
+    )
     # assert degrees_of_freedom(m) == 0
     simulation_results = solver.solve(m)
     assert_optimal_termination(simulation_results)
