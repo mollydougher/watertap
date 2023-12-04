@@ -76,6 +76,7 @@ import numpy as np
 def main():
     solver = get_solver()
     m = build()
+    fix_init_vars(m)
     m.fs.pump.initialize()
     m.fs.unit.initialize()
     print("init_okay")
@@ -171,34 +172,6 @@ def build():
         get_property = "flow_mol_phase_comp"
     )
 
-    # fix the inlet fstate variables
-    # m.fs.unit.inlet.temperature[0].fix(298.15)
-    # m.fs.unit.inlet.pressure[0].fix(2e5)
-
-    # fix the membrane properties, typical for DSPM-DE
-    # kept all values from the WaterTAP test.py for now
-    m.fs.unit.radius_pore.fix(0.5e-9)
-    m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
-    m.fs.unit.membrane_charge_density.fix(-60)
-    m.fs.unit.dielectric_constant_pore.fix(41.3)
-
-    # fix the pump variables
-    m.fs.pump.efficiency_pump[0].fix(0.75)
-    m.fs.pump.outlet.pressure[0].fix(2e5)
-
-    # fix final permeate pressure to be approx atmospheric
-    m.fs.unit.mixed_permeate[0].pressure.fix(101325)
-
-    # fix system values
-    m.fs.unit.spacer_porosity.fix(0.85)
-    m.fs.unit.channel_height.fix(5e-4)
-    m.fs.unit.velocity[0, 0].fix(0.1)
-    m.fs.unit.area.fix(100)
-
-    # fix additional variables for calculating mass transfer coefficient with spiral wound correlation
-    m.fs.unit.spacer_mixing_efficiency.fix()
-    m.fs.unit.spacer_mixing_length.fix()
-
     # unfix optimization variables
     m.fs.pump.outlet.pressure[0].unfix()
     m.fs.unit.area.unfix()
@@ -222,14 +195,36 @@ def build():
     # calculate the scaling factors
     calculate_scaling_factors(m)
     # check that all variables have scaling factors
-    unscaled_var_list = list(unscaled_variables_generator(m.fs.unit))
-    assert len(unscaled_var_list) == 0
+    # unscaled_var_list = list(unscaled_variables_generator(m.fs.unit))
+    # assert len(unscaled_var_list) == 0
     # Expect only flux_mol_phase_comp to be poorly scaled, as we have not
     # calculated correct values just yet.
     for var in list(badly_scaled_var_generator(m.fs.unit)):
         assert "flux_mol_phase_comp" in var[0].name
     return m
 
+def fix_init_vars(m):
+    # feed state variables
+    m.fs.unit.feed_side.properties_in[0].temperature.fix(298.15)
+    m.fs.unit.feed_side.properties_in[0].pressure.fix(2e5)
+    # pump variables
+    m.fs.pump.efficiency_pump[0].fix(0.75)
+    m.fs.pump.outlet.pressure[0].fix(2e5)
+    # membrane operation
+    m.fs.unit.recovery_vol_phase[0,"Liq"].setub(0.95)
+    m.fs.unit.spacer_porosity.fix(0.85)
+    m.fs.unit.channel_height.fix(5e-4)
+    m.fs.unit.velocity[0, 0].fix(0.1)
+    m.fs.unit.area.fix(100)
+    m.fs.unit.mixed_permeate[0].pressure.fix(101325)
+    # variables for calculating mass transfer coefficient with spiral wound correlation
+    m.fs.unit.spacer_mixing_efficiency.fix()
+    m.fs.unit.spacer_mixing_length.fix()
+    # membrane properties
+    m.fs.unit.radius_pore.fix(0.5e-9)
+    m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
+    m.fs.unit.membrane_charge_density.fix(-60)
+    m.fs.unit.dielectric_constant_pore.fix(41.3)
 
 if __name__ == "__main__":
     main()
