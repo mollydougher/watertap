@@ -18,6 +18,7 @@ from pyomo.environ import (
     ConcreteModel,
     Constraint,
     Objective,
+    maximize,
     value,
     Var,
     units as pyunits,
@@ -55,6 +56,7 @@ from idaes.core.util.model_statistics import (
     number_variables,
     number_total_constraints,
     number_unused_variables,
+    report_statistics
 )
 from idaes.core.util.testing import initialization_tester
 from idaes.core.util.exceptions import ConfigurationError
@@ -83,11 +85,17 @@ def main():
     m.fs.unit.report()
     # add an objective, maximize Mg rejection
     m.fs.recovery_obj = Objective(
-        expr = -(m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Mg_2+"])
+        expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Mg_2+"],
+        sense = maximize
     )
     # assert degrees_of_freedom(m) == 0
-    simulation_results = solver.solve(m)
+    # unfix optimization variables
+    m.fs.pump.outlet.pressure[0].unfix()
+    m.fs.unit.area.unfix()
+    simulation_results = solver.solve(m, tee=True)
     assert_optimal_termination(simulation_results)
+    m.fs.unit.report()
+    report_statistics(m)
     return m
 
 
@@ -160,6 +168,7 @@ def build():
 
     # fix the inlet flow rates
     # approximate the values of Salar de Atacama (Cl- overridden)
+    # TODO: update these concentrations to account for water flowrate
     m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Li_+"].fix(0.172)
     m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Mg_2+"].fix(0.305)
     m.fs.unit.feed_side.properties_in[0.0].flow_mol_phase_comp["Liq", "Cl_-"].fix(0.42)
@@ -172,9 +181,9 @@ def build():
         get_property = "flow_mol_phase_comp"
     )
 
-    # unfix optimization variables
-    m.fs.pump.outlet.pressure[0].unfix()
-    m.fs.unit.area.unfix()
+    # # unfix optimization variables
+    # m.fs.pump.outlet.pressure[0].unfix()
+    # m.fs.unit.area.unfix()
 
     # check the DOF
     # check_dof(m, fail_flag = True)
