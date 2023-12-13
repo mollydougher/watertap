@@ -6,6 +6,8 @@
 Initial property package for H2O-LiCl system
 """
 
+import numpy as np
+
 # Import Python libraries
 import idaes.logger as idaeslog
 
