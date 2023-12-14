@@ -523,7 +523,7 @@ class LiClStateBlockData(StateBlockData):
         self.mass_frac_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize={("Liq", "H2O"): 0.965, ("Liq", "LiCl"): 0.035},
+            initialize={("Liq", "H2O"): 0.99969, ("Liq", "LiCl"): 3.14e-04},
             # upper bound set to None because of stability benefits
             bounds=(0.0, None),
             units=pyunits.dimensionless,
@@ -566,7 +566,7 @@ class LiClStateBlockData(StateBlockData):
     def _flow_vol_phase(self):
         self.flow_vol_phase = Var(
             self.params.phase_list,
-            initialize=1,
+            initialize=0.001,
             bounds=(0.0, None),
             units=pyunits.m**3 / pyunits.s,
             doc="Volumetric flow rate",
@@ -593,7 +593,7 @@ class LiClStateBlockData(StateBlockData):
         self.conc_mass_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize=10,
+            initialize=0.31,
             bounds=(1e-3, 2e3),
             units=pyunits.kg * pyunits.m**-3,
             doc="Mass concentration",
@@ -615,7 +615,7 @@ class LiClStateBlockData(StateBlockData):
         self.flow_mol_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize=100,
+            initialize=0.0075,
             bounds=(0.0, None),
             units=pyunits.mol / pyunits.s,
             doc="Molar flowrate",
@@ -658,7 +658,7 @@ class LiClStateBlockData(StateBlockData):
         self.molality_phase_comp = Var(
             self.params.phase_list,
             ["LiCl"],
-            initialize=1,
+            initialize=0.007,
             bounds=(1e-4, 10),
             units=pyunits.mole / pyunits.kg,
             doc="Molality",
@@ -679,8 +679,8 @@ class LiClStateBlockData(StateBlockData):
     def _visc_d_phase(self):
         self.visc_d_phase = Var(
             self.params.phase_list,
-            initialize=1e-3,
-            bounds=(1e-4, 1e-2),
+            initialize=1e-3,                # TODO: check these init values
+            bounds=(1e-4, 1e-2),            # TODO: check these init values
             units=pyunits.Pa * pyunits.s,
             doc="Viscosity",
         )
@@ -724,8 +724,8 @@ class LiClStateBlockData(StateBlockData):
 
     def _osm_coeff(self):
         self.osm_coeff = Var(
-            initialize=1,
-            bounds=(0.5, 2),
+            initialize=1,           # TODO: check these init values
+            bounds=(0.5, 2),        # TODO: check these init values
             units=pyunits.dimensionless,
             doc="Osmotic coefficient",
         )
@@ -747,8 +747,8 @@ class LiClStateBlockData(StateBlockData):
     def _pressure_osm_phase(self):
         self.pressure_osm_phase = Var(
             self.params.phase_list,
-            initialize=1e6,
-            bounds=(5e2, 5e7),
+            initialize=1e6,             # TODO: check these init values
+            bounds=(5e2, 5e7),          # TODO: check these init values
             units=pyunits.Pa,
             doc="Osmotic pressure",
         )
