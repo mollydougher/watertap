@@ -22,6 +22,7 @@ from pyomo.environ import (
     Suffix,
     value,
     check_optimal_termination,
+    exp
 )
 from pyomo.environ import units as pyunits
 
@@ -733,13 +734,13 @@ class LiClStateBlockData(StateBlockData):
         def rule_osm_coeff(b):              # osmotic coefficients, table 11 in El Guendouzi
             return b.osm_coeff == (
                 1 
-                - (b.params.osm_coeff_param["0"] * b._molality_phase_comp["Liq", "LiCl"]**(1/2) /
-                   (1 + b.params.osm_coeff_param["1"] * b._molality_phase_comp["Liq", "LiCl"]**(1/2)))
-                + b._molality_phase_comp["Liq", "LiCl"] * (b.params.osm_coeff_param["2"] 
+                - (b.params.osm_coeff_param["0"] * b.molality_phase_comp["Liq", "LiCl"]**(1/2) /
+                   (1 + b.params.osm_coeff_param["1"] * b.molality_phase_comp["Liq", "LiCl"]**(1/2)))
+                + b.molality_phase_comp["Liq", "LiCl"] * (b.params.osm_coeff_param["2"] 
                                                            + (b.params.osm_coeff_param["3"] 
-                                                           * np.exp(-b.params.osm_coeff_param["4"]
-                                                                    * b._molality_phase_comp["Liq", "LiCl"]**(1/2))))
-                + b._molality_phase_comp["Liq", "LiCl"]**2 * b.params.osm_coeff_param["5"]
+                                                           * exp(-b.params.osm_coeff_param["4"]
+                                                                    * b.molality_phase_comp["Liq", "LiCl"]**(1/2))))
+                + b.molality_phase_comp["Liq", "LiCl"]**2 * b.params.osm_coeff_param["5"]
             )
 
         self.eq_osm_coeff = Constraint(rule=rule_osm_coeff)
