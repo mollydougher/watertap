@@ -491,11 +491,10 @@ class LiClStateBlockData(StateBlockData):
         self.scaling_factor = Suffix(direction=Suffix.EXPORT)
 
         # Add state variables
-        # TODO: update initial component flows
         self.flow_mass_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize={("Liq", "H2O"): 0.965, ("Liq", "LiCl"): 0.035},
+            initialize={("Liq", "H2O"): 1.0058, ("Liq", "LiCl"): 3.158e-04},
             bounds=(0.0, None),
             domain=NonNegativeReals,
             units=pyunits.kg / pyunits.s,
