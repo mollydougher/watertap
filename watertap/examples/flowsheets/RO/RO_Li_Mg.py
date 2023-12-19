@@ -23,9 +23,11 @@ m.fs.unit = ReverseOsmosis0D(
     has_pressure_change=False)
 
 # Specify system variables.
-m.fs.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'LiCl'].fix(3.158e-04)  # mass flow rate of LiCl (kg/s)
-m.fs.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'H2O'].fix(1.0058)   # mass flow rate of water (kg/s)
-m.fs.unit.inlet.pressure[0].fix(50e5)                              # feed pressure (Pa)
+m.fs.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'LiCl'].fix(0.3158)  # mass flow rate of LiCl (kg/s)
+        # increasing the Li ion concentration fixed the permeate initializtion fail
+        # currently 10x too high for this ratio of water
+m.fs.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'H2O'].fix(10.058)   # mass flow rate of water (kg/s)
+m.fs.unit.inlet.pressure[0].fix(35e5)                              # feed pressure (Pa)
 m.fs.unit.inlet.temperature[0].fix(298.15)                         # feed temperature (K)
 m.fs.unit.area.fix(50)                                             # membrane area (m^2)
 m.fs.unit.A_comp.fix(4.2e-12)                                      # membrane water permeability (m/Pa/s)
