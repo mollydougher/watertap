@@ -86,10 +86,10 @@ class LiClParameterData(PhysicalParameterBlock):
         # this package is developed from Bartholomew & Mauter (2019) https://doi.org/10.1016/j.memsci.2018.11.067
         # the enthalpy calculations are from Sharqawy et al. (2010) http://dx.doi.org/10.5004/dwt.2010.1079
         # reference - LiCl
-        # mass density, specific heat: Ruiqi Song et al. (2019) https://iopscience.iop.org/article/10.1088/1757-899X/562/1/012102/pdf
+        # mass density, specific heat, enthalpy: Ruiqi Song et al. (2019) https://iopscience.iop.org/article/10.1088/1757-899X/562/1/012102/pdf
         # dyn viscosity: Abdulagatov et al. (2006) https://www.sciencedirect.com/science/article/pii/S0167732205002102
         # diffusivity: Lobo (1993) https://www.degruyter.com/document/doi/10.1351/pac199365122613/html
-        # osmotic coeff: El Guendouzi et al. (2001) https://www.sciencedirect.com/science/article/pii/S0021961400908152
+        # osmotic coeff: El Guendouzi et al. (2001) https://www.sciencedirect.com/science/article/pii/S0021961400908152]
 
         # molecular weight
         mw_comp_data = {"H2O": 18.01528e-3, "LiCl": 42.394e-3}
@@ -212,14 +212,14 @@ class LiClParameterData(PhysicalParameterBlock):
                 "diffus_phase_comp": {"method": "_diffus_phase_comp"},
                 "visc_d_phase": {"method": "_visc_d_phase"},
                 "pressure_osm_phase": {"method": "_pressure_osm_phase"},
-                "enth_mass_phase": {"method": "_enth_mass_phase"},
+                # "enth_mass_phase": {"method": "_enth_mass_phase"},
             }
         )
 
         obj.define_custom_properties(
             {
                 "osm_coeff": {"method": "_osm_coeff"},
-                "enth_flow": {"method": "_enth_flow"},
+                # "enth_flow": {"method": "_enth_flow"},
             }
         )
 
@@ -494,7 +494,7 @@ class LiClStateBlockData(StateBlockData):
         self.flow_mass_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize={("Liq", "H2O"): 1.0058, ("Liq", "LiCl"): 3.158e-04},
+            initialize={("Liq", "H2O"): 10.058, ("Liq", "LiCl"): 0.03158},
             bounds=(0.0, None),
             domain=NonNegativeReals,
             units=pyunits.kg / pyunits.s,
@@ -510,7 +510,7 @@ class LiClStateBlockData(StateBlockData):
         )
 
         self.pressure = Var(
-            initialize=101325,
+            initialize=35e5,
             bounds=(1e4, 5e7),
             domain=NonNegativeReals,
             units=pyunits.Pa,
@@ -523,7 +523,7 @@ class LiClStateBlockData(StateBlockData):
         self.mass_frac_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize={("Liq", "H2O"): 0.99969, ("Liq", "LiCl"): 3.14e-04},
+            initialize={("Liq", "H2O"): 0.997, ("Liq", "LiCl"): 0.003},
             # upper bound set to None because of stability benefits
             bounds=(0.0, None),
             units=pyunits.dimensionless,
@@ -566,7 +566,7 @@ class LiClStateBlockData(StateBlockData):
     def _flow_vol_phase(self):
         self.flow_vol_phase = Var(
             self.params.phase_list,
-            initialize=0.001,
+            initialize=0.01,
             bounds=(0.0, None),
             units=pyunits.m**3 / pyunits.s,
             doc="Volumetric flow rate",
@@ -593,7 +593,7 @@ class LiClStateBlockData(StateBlockData):
         self.conc_mass_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize=0.31,
+            initialize=3.1,
             bounds=(1e-3, 2e3),
             units=pyunits.kg * pyunits.m**-3,
             doc="Mass concentration",
@@ -615,7 +615,7 @@ class LiClStateBlockData(StateBlockData):
         self.flow_mol_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize=0.0075,
+            initialize=0.15,
             bounds=(0.0, None),
             units=pyunits.mol / pyunits.s,
             doc="Molar flowrate",
@@ -637,7 +637,7 @@ class LiClStateBlockData(StateBlockData):
         self.mole_frac_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize=0.1,
+            initialize=0.0003,
             bounds=(0.0, None),
             units=pyunits.dimensionless,
             doc="Mole fraction",
@@ -658,7 +658,7 @@ class LiClStateBlockData(StateBlockData):
         self.molality_phase_comp = Var(
             self.params.phase_list,
             ["LiCl"],
-            initialize=0.007,
+            initialize=0.015,
             bounds=(1e-4, 10),
             units=pyunits.mole / pyunits.kg,
             doc="Molality",
@@ -799,40 +799,40 @@ class LiClStateBlockData(StateBlockData):
             self.params.phase_list, rule=rule_cp_w_phase
         )
     
-    def _enth_mass_phase(self):
-        self.enth_mass_phase = Var(
-            self.params.phase_list,
-            initialize=5e4,
-            bounds=(1e4, 1e6),
-            units=pyunits.J * pyunits.kg**-1,
-            doc="Specific enthalpy",
-        )
+    # def _enth_mass_phase(self):
+    #     self.enth_mass_phase = Var(
+    #         self.params.phase_list,
+    #         initialize=5e4,
+    #         bounds=(1e4, 1e6),
+    #         units=pyunits.J * pyunits.kg**-1,
+    #         doc="Specific enthalpy",
+    #     )
 
-        def rule_enth_mass_phase(
-            b, p
-        ):  # specific enthalpy, H' = Cp(T-Tref) + (P-Pref)/rho  # TODO: remove enthalpy when all units can be isothermal
-            t = (
-                b.temperature - 273.15 * pyunits.K
-            )  # temperature in degC, but pyunits in K
-            P = b.pressure - 101325 * pyunits.Pa
-            h_w = b.params.cp_w * t + P / self.dens_mass_phase[p]
+    #     def rule_enth_mass_phase(
+    #         b, p
+    #     ):  # specific enthalpy, H' = Cp(T-Tref) + (P-Pref)/rho  # TODO: remove enthalpy when all units can be isothermal
+    #         t = (
+    #             b.temperature - 273.15 * pyunits.K
+    #         )  # temperature in degC, but pyunits in K
+    #         P = b.pressure - 101325 * pyunits.Pa
+    #         h_w = b.params.cp_w * t + P / self.dens_mass_phase[p]
 
-            return b.enth_mass_phase[p] == h_w
+    #         return b.enth_mass_phase[p] == h_w
 
-        self.eq_enth_mass_phase = Constraint(
-            self.params.phase_list, rule=rule_enth_mass_phase
-        )
+    #     self.eq_enth_mass_phase = Constraint(
+    #         self.params.phase_list, rule=rule_enth_mass_phase
+    #     )
 
-    def _enth_flow(self):
-        # enthalpy flow expression for get_enthalpy_flow_terms method
+    # def _enth_flow(self):
+    #     # enthalpy flow expression for get_enthalpy_flow_terms method
 
-        def rule_enth_flow(b):  # enthalpy flow [J/s]
-            return (
-                sum(b.flow_mass_phase_comp["Liq", j] for j in b.params.component_list)
-                * b.enth_mass_phase["Liq"]
-            )
+    #     def rule_enth_flow(b):  # enthalpy flow [J/s]
+    #         return (
+    #             sum(b.flow_mass_phase_comp["Liq", j] for j in b.params.component_list)
+    #             * b.enth_mass_phase["Liq"]
+    #         )
 
-        self.enth_flow = Expression(rule=rule_enth_flow)
+    #     self.enth_flow = Expression(rule=rule_enth_flow)
 
     # TODO: add vapor pressure, thermal conductivity,
     #   and heat of vaporization
@@ -851,11 +851,11 @@ class LiClStateBlockData(StateBlockData):
         return self.enth_flow
 
     # TODO: make property package compatible with dynamics
-    # def get_material_density_terms(self, p, j):
-    #     """Create material density terms."""
+    def get_material_density_terms(self, p, j):
+        """Create material density terms."""
 
-    # def get_enthalpy_density_terms(self, p):
-    #     """Create enthalpy density terms."""
+    def get_enthalpy_density_terms(self, p):
+        """Create enthalpy density terms."""
 
     def default_material_balance_type(self):
         return MaterialBalanceType.componentTotal
