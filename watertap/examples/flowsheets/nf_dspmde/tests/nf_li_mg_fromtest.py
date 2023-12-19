@@ -56,8 +56,9 @@ from idaes.core.util.model_statistics import (
     number_variables,
     number_total_constraints,
     number_unused_variables,
-    report_statistics
+    report_statistics,
 )
+from idaes.core.util.model_diagnostics import DiagnosticsToolbox
 from idaes.core.util.testing import initialization_tester
 from idaes.core.util.exceptions import ConfigurationError
 # from idaes.core.util.scaling import (
@@ -76,11 +77,17 @@ from idaes.models.unit_models import (
 def main():
     solver = get_solver()
     m = build()
-    fix_init_vars(m)
-    m.fs.pump.initialize()
-    m.fs.unit.initialize()
+    initialize(m,solver)
+    # dt = DiagnosticsToolbox(m)
+    # dt.report_numerical_issues()
+    # dt.display_constraints_with_large_residuals()
+    # dt.display_constraints_with_extreme_jacobians()
+    # m.fs.pump.initialize()
+    # m.fs.pump.inlet.display()
+    # m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
+
     # add an objective, maximize Mg rejection
     m.fs.recovery_obj = Objective(
         expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Mg_2+"],
@@ -245,6 +252,25 @@ def fix_init_vars(m):
     m.fs.unit.membrane_charge_density.fix(-60)
     m.fs.unit.dielectric_constant_pore.fix(41.3)
     iscale.calculate_scaling_factors(m)
+
+
+def initialize(m,solver):
+    set_default_feed(m,solver)
+    fix_init_vars(m)
+
+    m.fs.feed.initialize(optarg=solver.options)
+    propagate_state(m.fs.feed_to_pump)
+
+    m.fs.pump.initialize(optarg=solver.options)
+    propagate_state(m.fs.pump_to_nf)
+
+    m.fs.unit.initialize(optarg=solver.options)
+    propagate_state(m.fs.nf_to_product)
+    propagate_state(m.fs.nf_to_disposal)
+
+    m.fs.product.initialize(optarg=solver.options)
+    m.fs.disposal.initialize(optarg=solver.options)
+
 
 def set_NF_feed(
         blk,
