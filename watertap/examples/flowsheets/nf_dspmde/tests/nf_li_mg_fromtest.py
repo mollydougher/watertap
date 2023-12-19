@@ -12,7 +12,7 @@
 ####################################################################
 # import statements
 import numpy as np
-from math import log
+from math import log, floor
 import idaes.logger as idaeslog
 from pyomo.environ import (
     ConcreteModel,
@@ -279,8 +279,22 @@ def set_NF_feed(
     blk.feed.properties[0].flow_mass_phase_comp["Liq", "H2O"].unfix()
     blk.feed.properties[0].flow_mol_phase_comp["Liq", "H2O"].fix()
 
-    # TODO: add and update scaling to a separate function
+    set_NF_feed_scaling(blk)
+
     # TODO: add electroneutrality here
+
+
+def calc_scale(value):
+    return -1 * floor(log(value,10))
+
+def set_NF_feed_scaling(blk):
+    _add = 0
+    for i in blk.feed.properties[0].flow_mol_phase_comp:
+        scale = calc_scale(blk.feed.properties[0].flow_mol_phase_comp[i].value)
+        print(f"{i} flow_mol_phase_comp scaling factor = {10**(scale+_add)}")
+        blk.properties.set_default_scaling(
+            "flow_mol_phase_comp", 10 ** (scale + _add), index=i
+        )
 
 if __name__ == "__main__":
     main()
