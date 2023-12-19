@@ -71,10 +71,6 @@ from idaes.models.unit_models import (
     Product
 )
 
-import numpy as np
-
-
-# main function from Alex Dudchenko
 def main():
     solver = get_solver()
     m = build()
@@ -99,8 +95,23 @@ def main():
     return m
 
 
-def feed_properties():
-    property_kwds = {
+def set_default_feed(m, solver):
+    # fix the feed concentrations used in the initialization
+    # approximate the kg/m3 = g/L conc of Salar de Atacama (Cl- gets overridden)
+    conc_mass_phase_comp = {
+        "Li_+": 1.19,
+        "Mg_2+": 7.31,
+        "Cl_-": 143.72
+    }
+    set_NF_feed(
+        blk=m.fs,
+        solver=solver,
+        flow_mass_h2o=10,   # arbitraty for now
+        conc_mass_phase_comp=conc_mass_phase_comp
+    )
+
+def define_feed_comp():
+    default = {
         # need to add Cl- for electroneutrality, assume LiCl and MgCl2 salts
         "solute_list": ["Li_+","Mg_2+","Cl_-"],
         # https://www.aqion.de/site/diffusion-coefficients
@@ -118,16 +129,15 @@ def feed_properties():
             "Cl_-": 0.035
         },
         # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
+        # adjusted Cl and Mg to values from nf.py
         # medium confident, these values come from above review paper, averaged values from multiple studies
         # reasonable orders of magnitude
         "stokes_radius_data": {
-            #"Cl_-": 0.121e-9,
+            "Cl_-": 0.121e-9,
             "Li_+": 3.61e-10,
+            "Mg_2+": 0.347e-9
             #"Mg_2+": 4.07e-10,
             #"Cl_-": 3.28e-10
-            # from nf.py:
-            "Cl_-": 2.03e-9,
-            "Mg_2+": 0.706e-9,
         },
         # very confident
         "charge": {
@@ -139,7 +149,7 @@ def feed_properties():
         "activity_coefficient_model":ActivityCoefficientModel.ideal,
         "density_calculation": DensityCalculation.constant
     }
-    return property_kwds
+    return default
 
 
 def build():
@@ -147,20 +157,23 @@ def build():
     m = ConcreteModel()
 
     # create the flowsheet
-    m.fs = FlowsheetBlock(dynamic = False)
+    m.fs = FlowsheetBlock(dynamic=False)
 
     # define the propery model
-    property_kwds = feed_properties()
-    m.fs.properties = MCASParameterBlock(**property_kwds)
+    default = define_feed_comp()
+    m.fs.properties = MCASParameterBlock(**default)
 
     # add the feed and product streams
-    m.fs.feed = Feed(property_package = m.fs.properties)
-    m.fs.product = Product(property_package = m.fs.properties)
-    m.fs.disposal = Product(property_package = m.fs.properties)
+    m.fs.feed = Feed(property_package=m.fs.properties)
+    # next 2 lines from nf.py
+    m.fs.feed.properties[0].conc_mass_phase_comp[...]
+    m.fs.feed.properties[0].flow_mass_phase_comp[...]
+    m.fs.product = Product(property_package=m.fs.properties)
+    m.fs.disposal = Product(property_package=m.fs.properties)
 
     # define unit models
-    m.fs.pump = Pump(property_package = m.fs.properties)
-    m.fs.unit = NanofiltrationDSPMDE0D(property_package = m.fs.properties)
+    m.fs.pump = Pump(property_package=m.fs.properties)
+    m.fs.unit = NanofiltrationDSPMDE0D(property_package=m.fs.properties)
 
     # connect the streams and blocks
     m.fs.feed_to_pump = Arc(source=m.fs.feed.outlet, destination=m.fs.pump.inlet)
@@ -169,19 +182,7 @@ def build():
     m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
 
-    # fix the feed concentrations
-    # approximate the kg/m3 = g/L conc of Salar de Atacama (Cl- gets overridden)
-    conc_mass_phase_comp = {
-        "Li_+": 1.19,
-        "Mg_2+": 7.31,
-        "Cl_-": 143.72
-    }
-    set_feed_comp(
-        blk=m.fs,
-        solver=None,
-        flow_mass_h2o=10,   # arbitraty for now
-        conc_mass_phase_comp=conc_mass_phase_comp
-    )
+    
     # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Li_+"].fix(1.19)
     # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Mg_2+"].fix(7.31)
     # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Cl_-"].fix(143.72)
@@ -248,7 +249,7 @@ def fix_init_vars(m):
     m.fs.unit.membrane_charge_density.fix(-60)
     m.fs.unit.dielectric_constant_pore.fix(41.3)
 
-def set_feed_comp(
+def set_NF_feed(
         blk,
         solver,
         flow_mass_h2o,
