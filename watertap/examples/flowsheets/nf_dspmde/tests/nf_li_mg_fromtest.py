@@ -121,10 +121,13 @@ def feed_properties():
         # medium confident, these values come from above review paper, averaged values from multiple studies
         # reasonable orders of magnitude
         "stokes_radius_data": {
-            "Cl_-": 0.121e-9,
+            #"Cl_-": 0.121e-9,
             "Li_+": 3.61e-10,
-            "Mg_2+": 4.07e-10,
+            #"Mg_2+": 4.07e-10,
             #"Cl_-": 3.28e-10
+            # from nf.py:
+            "Cl_-": 2.03e-9,
+            "Mg_2+": 0.706e-9,
         },
         # very confident
         "charge": {
