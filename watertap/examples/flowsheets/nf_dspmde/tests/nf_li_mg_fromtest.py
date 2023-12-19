@@ -88,11 +88,16 @@ def main():
     print("init_okay")
     m.fs.unit.report()
 
-    # add an objective, maximize Mg rejection
-    m.fs.recovery_obj = Objective(
-        expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Mg_2+"],
-        sense = maximize
+    # add an objective
+    m.fs.obj = Objective(
+        expr = m.fs.disposal.flow_mol_phase_comp[0,"Liq", "Li_+"],
+        # sense = maximize
     )
+    # # add a contraint, limit the Li rejection
+    # m.fs.li_rejection_con = Constraint(
+    #     expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Li_+"] >= 0.2
+    # )
+
     # assert degrees_of_freedom(m) == 0
     # unfix optimization variables
     m.fs.pump.outlet.pressure[0].unfix()
@@ -100,7 +105,14 @@ def main():
     simulation_results = solver.solve(m, tee=True)
     assert_optimal_termination(simulation_results)
     m.fs.unit.report()
-    report_statistics(m)
+    print("Optimal NF pressure (Bar)", m.fs.pump.outlet.pressure[0].value / 1e5)
+    print("Optimal area (m2)", m.fs.unit.area.value)
+    print(
+        "Optimal nf recovery (%)",
+        m.fs.unit.recovery_vol_phase[0.0, "Liq"].value * 100,
+    )
+    print("Optimal Li rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Li_+"].value * 100,)
+    # report_statistics(m)
     return m
 
 
