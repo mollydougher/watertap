@@ -60,16 +60,18 @@ from idaes.core.util.model_statistics import (
 )
 from idaes.core.util.testing import initialization_tester
 from idaes.core.util.exceptions import ConfigurationError
-from idaes.core.util.scaling import (
-    calculate_scaling_factors,
-    unscaled_variables_generator,
-    badly_scaled_var_generator,
-)
+# from idaes.core.util.scaling import (
+#     calculate_scaling_factors,
+#     unscaled_variables_generator,
+#     badly_scaled_var_generator,
+# )
+import idaes.core.util.scaling as iscale
 from idaes.core.util.initialization import propagate_state
 from idaes.models.unit_models import (
     Feed,
     Product
 )
+
 
 def main():
     solver = get_solver()
@@ -106,7 +108,7 @@ def set_default_feed(m, solver):
     set_NF_feed(
         blk=m.fs,
         solver=solver,
-        flow_mass_h2o=10,   # arbitraty for now
+        flow_mass_h2o=1,   # arbitraty for now
         conc_mass_phase_comp=conc_mass_phase_comp
     )
 
@@ -166,8 +168,8 @@ def build():
     # add the feed and product streams
     m.fs.feed = Feed(property_package=m.fs.properties)
     # next 2 lines from nf.py
-    m.fs.feed.properties[0].conc_mass_phase_comp[...]
-    m.fs.feed.properties[0].flow_mass_phase_comp[...]
+    # m.fs.feed.properties[0].conc_mass_phase_comp[...]
+    # m.fs.feed.properties[0].flow_mass_phase_comp[...]
     m.fs.product = Product(property_package=m.fs.properties)
     m.fs.disposal = Product(property_package=m.fs.properties)
 
@@ -195,35 +197,28 @@ def build():
     # check the DOF
     # check_dof(m, fail_flag = True)
 
-    # scaling, using same method as WaterTAP test.py for now
-    m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Li_+")
-    )
-    m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Mg_2+")
-    )
-    m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1, index = ("Liq", "Cl_-")
-    )
-    m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1 / 47, index = ("Liq", "H2O")
-    )
-    # calculate the scaling factors
-    calculate_scaling_factors(m)
+    # # scaling, using same method as WaterTAP test.py for now
+    # m.fs.properties.set_default_scaling(
+    #     "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Li_+")
+    # )
+    # m.fs.properties.set_default_scaling(
+    #     "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Mg_2+")
+    # )
+    # m.fs.properties.set_default_scaling(
+    #     "flow_mol_phase_comp", 1, index = ("Liq", "Cl_-")
+    # )
+    # m.fs.properties.set_default_scaling(
+    #     "flow_mol_phase_comp", 1 / 47, index = ("Liq", "H2O")
+    # )
+    # # calculate the scaling factors
+    # calculate_scaling_factors(m)
     # check that all variables have scaling factors
     # unscaled_var_list = list(unscaled_variables_generator(m.fs.unit))
     # assert len(unscaled_var_list) == 0
     # Expect only flux_mol_phase_comp to be poorly scaled, as we have not
     # calculated correct values just yet.
-    for var in list(badly_scaled_var_generator(m.fs.unit)):
-        assert "flux_mol_phase_comp" in var[0].name
-
-    # assert electroneutrality
-    m.fs.feed.properties[0].assert_electroneutrality(
-        defined_state = True,
-        adjust_by_ion = "Cl_-",
-        get_property = "flow_mol_phase_comp"
-    )
+    # for var in list(iscale.badly_scaled_var_generator(m.fs.unit)):
+    #     assert "flux_mol_phase_comp" in var[0].name
     return m
 
 def fix_init_vars(m):
@@ -233,6 +228,7 @@ def fix_init_vars(m):
     # pump variables
     m.fs.pump.efficiency_pump[0].fix(0.75)
     m.fs.pump.outlet.pressure[0].fix(2e5)
+    iscale.set_scaling_factor(m.fs.pump.control_volume.work, 1e-4)
     # membrane operation
     m.fs.unit.recovery_vol_phase[0,"Liq"].setub(0.95)
     m.fs.unit.spacer_porosity.fix(0.85)
@@ -248,6 +244,7 @@ def fix_init_vars(m):
     m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
     m.fs.unit.membrane_charge_density.fix(-60)
     m.fs.unit.dielectric_constant_pore.fix(41.3)
+    iscale.calculate_scaling_factors(m)
 
 def set_NF_feed(
         blk,
@@ -274,14 +271,26 @@ def set_NF_feed(
     for ion, x in conc_mass_phase_comp.items():
         blk.feed.properties[0].conc_mass_phase_comp["Liq", ion].unfix()
         blk.feed.properties[0].flow_mol_phase_comp["Liq", ion].fix()
-        #blk.feed.properties[0].flow_mass_phase_comp["Liq", ion].unfix()
+        blk.feed.properties[0].flow_mass_phase_comp["Liq", ion].unfix()
     blk.feed.properties[0].conc_mass_phase_comp["Liq", "H2O"].unfix()
     blk.feed.properties[0].flow_mass_phase_comp["Liq", "H2O"].unfix()
     blk.feed.properties[0].flow_mol_phase_comp["Liq", "H2O"].fix()
 
     set_NF_feed_scaling(blk)
 
-    # TODO: add electroneutrality here
+    # assert electroneutrality
+    blk.feed.properties[0].assert_electroneutrality(
+        defined_state = True,
+        adjust_by_ion = "Cl_-",
+        get_property = "flow_mol_phase_comp"
+    )
+
+    blk.feed.properties[0].temperature.fix(298.15)
+
+    # switching to concentration for ease of adjusting in UI -- addresses error in fixing flow_mol_phase_comp
+    for ion, x in conc_mass_phase_comp.items():
+        blk.feed.properties[0].conc_mass_phase_comp["Liq", ion].unfix()
+        blk.feed.properties[0].flow_mol_phase_comp["Liq", ion].fix()
 
 
 def calc_scale(value):
