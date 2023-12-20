@@ -12,64 +12,31 @@
 ####################################################################
 
 # import statements
-import numpy as np
 from math import log, floor
-import idaes.logger as idaeslog
 from pyomo.environ import (
     ConcreteModel,
     Constraint,
     Objective,
     maximize,
-    value,
-    Var,
     units as pyunits,
     assert_optimal_termination,
     TransformationFactory,
 )
-
 from pyomo.network import Arc
-from pyomo.util.check_units import assert_units_consistent
-from pyomo.network import Port
-from idaes.core import (
-    FlowsheetBlock,
-    MaterialBalanceType,
-    MomentumBalanceType,
-    ControlVolume0DBlock,
-)
-
+from idaes.core import FlowsheetBlock
 from watertap.property_models.multicomp_aq_sol_prop_pack import (
     MCASParameterBlock,
     ActivityCoefficientModel,
     DensityCalculation,
-    MCASStateBlock,
 )
-
 from watertap.unit_models.pressure_changer import Pump
-from watertap.unit_models.nanofiltration_DSPMDE_0D import (
-    NanofiltrationDSPMDE0D,
-    MassTransferCoefficient,
-    ConcentrationPolarizationType,
-)
-
-from watertap.core.util.initialization import check_dof
+from watertap.unit_models.nanofiltration_DSPMDE_0D import NanofiltrationDSPMDE0D
 from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.core.solvers import get_solver
-from idaes.core.util.model_statistics import (
-    number_variables,
-    number_total_constraints,
-    number_unused_variables,
-    report_statistics,
-)
-
 from idaes.core.util.model_diagnostics import DiagnosticsToolbox
-from idaes.core.util.testing import initialization_tester
-from idaes.core.util.exceptions import ConfigurationError
 import idaes.core.util.scaling as iscale
 from idaes.core.util.initialization import propagate_state
-from idaes.models.unit_models import (
-    Feed,
-    Product
-)
+from idaes.models.unit_models import Feed,Product
 
 def main():
     solver = get_solver()
