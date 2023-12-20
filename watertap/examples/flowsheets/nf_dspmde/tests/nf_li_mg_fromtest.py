@@ -75,11 +75,6 @@ def main():
     solver = get_solver()
     m = build()
 
-    # dt = DiagnosticsToolbox(m)
-    # dt.report_numerical_issues()
-    # dt.display_constraints_with_large_residuals()
-    # dt.display_constraints_with_extreme_jacobians()
-
     initialize(m,solver)
     print("init_okay")
     m.fs.unit.report()
@@ -96,9 +91,14 @@ def main():
     m.fs.unit.report()
     print("Optimal NF pressure (Bar)", m.fs.pump.outlet.pressure[0].value / 1e5)
     print("Optimal area (m2)", m.fs.unit.area.value)
-    print("Optimal nf recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
+    print("Optimal NF vol recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
     print("Optimal Li rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Li_+"].value * 100)
-    # report_statistics(m)
+    print("Feed Mg:Li ratio (mass)", (m.fs.feed.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024) /  (m.fs.feed.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
+    print("Permeate Mg:Li ratio (mass)", (m.fs.permeate.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024) /  (m.fs.permeate.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
+
+    dt = DiagnosticsToolbox(m)
+    dt.report_numerical_issues()
+
     return m
 
 
@@ -173,8 +173,8 @@ def build():
 
     # add the feed and product streams
     m.fs.feed = Feed(property_package=m.fs.properties)
-    m.fs.product = Product(property_package=m.fs.properties)
-    m.fs.disposal = Product(property_package=m.fs.properties)
+    m.fs.permeate = Product(property_package=m.fs.properties)
+    m.fs.retentate = Product(property_package=m.fs.properties)
 
     # define unit models
     m.fs.pump = Pump(property_package=m.fs.properties)
@@ -183,8 +183,8 @@ def build():
     # connect the streams and blocks
     m.fs.feed_to_pump = Arc(source=m.fs.feed.outlet, destination=m.fs.pump.inlet)
     m.fs.pump_to_nf = Arc(source=m.fs.pump.outlet, destination=m.fs.unit.inlet)
-    m.fs.nf_to_product = Arc(source=m.fs.unit.permeate, destination=m.fs.product.inlet)
-    m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
+    m.fs.nf_to_permeate = Arc(source=m.fs.unit.permeate, destination=m.fs.permeate.inlet)
+    m.fs.nf_to_retentate = Arc(source=m.fs.unit.retentate, destination=m.fs.retentate.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
     return m
 
@@ -226,9 +226,20 @@ def unfix_opt_vars(m):
 
 def add_obj(m):
     # limit Li loss
+    # m.fs.obj = Objective(
+    #     expr = m.fs.retentate.flow_mol_phase_comp[0,"Liq", "Li_+"],
+    #     # sense = maximize
+    # )
+
+    # maxmize the reduction in Mg:Li ratio
     m.fs.obj = Objective(
-        expr = m.fs.disposal.flow_mol_phase_comp[0,"Liq", "Li_+"],
-        # sense = maximize
+        expr = (
+            ((m.fs.feed.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024)
+            /(m.fs.feed.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
+            - ((m.fs.permeate.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024)
+               /(m.fs.permeate.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
+        ),
+        sense = maximize
     )
 
 
@@ -257,11 +268,11 @@ def initialize(m,solver):
     propagate_state(m.fs.pump_to_nf)
 
     m.fs.unit.initialize(optarg=solver.options)
-    propagate_state(m.fs.nf_to_product)
-    propagate_state(m.fs.nf_to_disposal)
+    propagate_state(m.fs.nf_to_permeate)
+    propagate_state(m.fs.nf_to_retentate)
 
-    m.fs.product.initialize(optarg=solver.options)
-    m.fs.disposal.initialize(optarg=solver.options)
+    m.fs.permeate.initialize(optarg=solver.options)
+    m.fs.retentate.initialize(optarg=solver.options)
 
 
 def set_NF_feed(
@@ -328,4 +339,3 @@ def set_NF_feed_scaling(blk):
 
 if __name__ == "__main__":
     main()
-    
