@@ -4,7 +4,7 @@
 
 import pytest
 from pyomo.environ import value
-from watertap.examples.flowsheets.nf_dspmde.nf import main
+from watertap.examples.flowsheets.nf_dspmde.nf_brine import main
 
 
 @pytest.mark.requires_idaes_solver
@@ -12,10 +12,10 @@ from watertap.examples.flowsheets.nf_dspmde.nf import main
 def test_main():
     m = main()
     test_dict = {
-        "pressure": [m.fs.NF.pump.outlet.pressure[0] * 1e-5, 2.0],
-        "area": [m.fs.NF.nfUnit.area, 985.283490],
+        "pressure": [m.fs.pump.outlet.pressure[0] * 1e-5, 2.0],
+        "area": [m.fs.unit.area, 985.283490],
         "recovery": [
-            m.fs.NF.nfUnit.recovery_vol_phase[0.0, "Liq"] * 100,
+            m.fs.unit.recovery_vol_phase[0.0, "Liq"] * 100,
            9.983259,
         ],
         "ion_ratio": [
@@ -26,3 +26,4 @@ def test_main():
     }
     for model_result, testval in test_dict.values():
         assert pytest.approx(testval, rel=1e-3) == value(model_result)
+    print("done")
