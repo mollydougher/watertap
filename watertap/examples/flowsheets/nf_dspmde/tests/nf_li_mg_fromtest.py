@@ -72,38 +72,30 @@ from idaes.models.unit_models import (
 def main():
     solver = get_solver()
     m = build()
-    initialize(m,solver)
+
     # dt = DiagnosticsToolbox(m)
     # dt.report_numerical_issues()
     # dt.display_constraints_with_large_residuals()
     # dt.display_constraints_with_extreme_jacobians()
+
+    initialize(m,solver)
     print("init_okay")
     m.fs.unit.report()
 
-    # add an objective
-    m.fs.obj = Objective(
-        expr = m.fs.disposal.flow_mol_phase_comp[0,"Liq", "Li_+"],
-        # sense = maximize
-    )
-    # # add a contraint, limit the Li rejection
-    # m.fs.li_rejection_con = Constraint(
-    #     expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Li_+"] >= 0.2
-    # )
+    assert degrees_of_freedom(m) == 0
+    optimize(m, solver)
+    print("solved box problem")
+    m.fs.unit.report()
 
-    # assert degrees_of_freedom(m) == 0
-    # unfix optimization variables
-    m.fs.pump.outlet.pressure[0].unfix()
-    m.fs.unit.area.unfix()
-    simulation_results = solver.solve(m, tee=True)
-    assert_optimal_termination(simulation_results)
+    unfix_opt_vars(m)
+    add_obj(m)
+    # add_con(m)
+    optimize(m, solver)
     m.fs.unit.report()
     print("Optimal NF pressure (Bar)", m.fs.pump.outlet.pressure[0].value / 1e5)
     print("Optimal area (m2)", m.fs.unit.area.value)
-    print(
-        "Optimal nf recovery (%)",
-        m.fs.unit.recovery_vol_phase[0.0, "Liq"].value * 100,
-    )
-    print("Optimal Li rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Li_+"].value * 100,)
+    print("Optimal nf recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
+    print("Optimal Li rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Li_+"].value * 100)
     # report_statistics(m)
     return m
 
@@ -231,6 +223,31 @@ def fix_init_vars(m):
     m.fs.unit.dielectric_constant_pore.fix(41.3)
     iscale.calculate_scaling_factors(m)
 
+def unfix_opt_vars(m):
+    m.fs.pump.outlet.pressure[0].unfix()
+    m.fs.unit.area.unfix()
+
+def add_obj(m):
+    # limit Li loss
+    m.fs.obj = Objective(
+        expr = m.fs.disposal.flow_mol_phase_comp[0,"Liq", "Li_+"],
+        # sense = maximize
+    )
+
+
+def add_con(m):
+    # limit the Li rejection
+    m.fs.li_rejection_con = Constraint(
+        expr = m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq", "Li_+"] >= 0.2
+    )
+
+
+def optimize(m, solver):
+    print("Optimizing with {} DOFs".format(degrees_of_freedom(m)))
+    simulation_results = solver.solve(m, tee=True)
+    assert_optimal_termination(simulation_results)
+    return simulation_results
+
 
 def initialize(m,solver):
     set_default_feed(m,solver)
@@ -289,7 +306,8 @@ def set_NF_feed(
         get_property = "flow_mol_phase_comp"
     )
 
-    blk.feed.properties[0].temperature.fix(298.15)
+    # over-specifies the problem:
+    # blk.feed.properties[0].temperature.fix(298.15)
 
     # switching to concentration for ease of adjusting in UI -- addresses error in fixing flow_mol_phase_comp
     for ion, x in conc_mass_phase_comp.items():
