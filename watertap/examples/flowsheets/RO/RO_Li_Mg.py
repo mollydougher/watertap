@@ -39,6 +39,13 @@ def main():
     optimize(m, solver)
     print("solved box problem")
     m.fs.unit.report()
+
+    unfix_opt_vars(m)
+    add_obj(m)
+    # add_con(m)
+    optimize(m, solver)
+    m.fs.unit.report()
+
     return m
 
 
@@ -81,6 +88,18 @@ def fix_init_vars(m):
     m.fs.unit.B_comp.fix(3.5e-8)
     # permeate pressure (Pa)
     m.fs.unit.permeate.pressure[0].fix(101325)
+
+
+def unfix_opt_vars(m):
+    m.fs.unit.area.unfix()
+
+
+def add_obj(m):
+    # min specific energy consumption
+    m.fs.obj = Objective(
+        expr = m.fs.unit.inlet.pressure[0]/(3.6e6),
+        # sense = maximize
+    )
 
 
 def optimize(m, solver):
