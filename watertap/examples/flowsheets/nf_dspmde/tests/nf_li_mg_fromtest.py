@@ -61,11 +61,6 @@ from idaes.core.util.model_statistics import (
 from idaes.core.util.model_diagnostics import DiagnosticsToolbox
 from idaes.core.util.testing import initialization_tester
 from idaes.core.util.exceptions import ConfigurationError
-# from idaes.core.util.scaling import (
-#     calculate_scaling_factors,
-#     unscaled_variables_generator,
-#     badly_scaled_var_generator,
-# )
 import idaes.core.util.scaling as iscale
 from idaes.core.util.initialization import propagate_state
 from idaes.models.unit_models import (
@@ -82,9 +77,6 @@ def main():
     # dt.report_numerical_issues()
     # dt.display_constraints_with_large_residuals()
     # dt.display_constraints_with_extreme_jacobians()
-    # m.fs.pump.initialize()
-    # m.fs.pump.inlet.display()
-    # m.fs.unit.initialize()
     print("init_okay")
     m.fs.unit.report()
 
@@ -150,15 +142,15 @@ def define_feed_comp():
             "Cl_-": 0.035
         },
         # avg vals from https://www.sciencedirect.com/science/article/pii/S138358661100637X
-        # adjusted Cl and Mg to values from nf.py
         # medium confident, these values come from above review paper, averaged values from multiple studies
         # reasonable orders of magnitude
         "stokes_radius_data": {
-            "Cl_-": 0.121e-9,
             "Li_+": 3.61e-10,
-            "Mg_2+": 0.347e-9
             #"Mg_2+": 4.07e-10,
             #"Cl_-": 3.28e-10
+            # adjusted Cl and Mg to values from nf.py'
+            "Cl_-": 0.121e-9,
+            "Mg_2+": 0.347e-9,
         },
         # very confident
         "charge": {
@@ -186,9 +178,6 @@ def build():
 
     # add the feed and product streams
     m.fs.feed = Feed(property_package=m.fs.properties)
-    # next 2 lines from nf.py
-    # m.fs.feed.properties[0].conc_mass_phase_comp[...]
-    # m.fs.feed.properties[0].flow_mass_phase_comp[...]
     m.fs.product = Product(property_package=m.fs.properties)
     m.fs.disposal = Product(property_package=m.fs.properties)
 
@@ -203,32 +192,9 @@ def build():
     m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
 
-    
-    # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Li_+"].fix(1.19)
-    # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Mg_2+"].fix(7.31)
-    # m.fs.unit.feed_side.properties_in[0].conc_mass_phase_comp["Liq", "Cl_-"].fix(143.72)
-    # m.fs.unit.feed_side.properties_in[0].flow_mol_phase_comp["Liq", "H2O"].fix(10)
-
-    # # unfix optimization variables
-    # m.fs.pump.outlet.pressure[0].unfix()
-    # m.fs.unit.area.unfix()
-
     # check the DOF
     # check_dof(m, fail_flag = True)
 
-    # # scaling, using same method as WaterTAP test.py for now
-    # m.fs.properties.set_default_scaling(
-    #     "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Li_+")
-    # )
-    # m.fs.properties.set_default_scaling(
-    #     "flow_mol_phase_comp", 1 / 0.5, index = ("Liq", "Mg_2+")
-    # )
-    # m.fs.properties.set_default_scaling(
-    #     "flow_mol_phase_comp", 1, index = ("Liq", "Cl_-")
-    # )
-    # m.fs.properties.set_default_scaling(
-    #     "flow_mol_phase_comp", 1 / 47, index = ("Liq", "H2O")
-    # )
     # # calculate the scaling factors
     # calculate_scaling_factors(m)
     # check that all variables have scaling factors
