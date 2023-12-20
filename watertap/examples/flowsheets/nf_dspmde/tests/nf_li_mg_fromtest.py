@@ -10,6 +10,7 @@
 #
 # https://github.com/watertap-org/watertap/blob/main/tutorials/nawi_spring_meeting2023.ipynb
 ####################################################################
+
 # import statements
 import numpy as np
 from math import log, floor
@@ -25,6 +26,7 @@ from pyomo.environ import (
     assert_optimal_termination,
     TransformationFactory,
 )
+
 from pyomo.network import Arc
 from pyomo.util.check_units import assert_units_consistent
 from pyomo.network import Port
@@ -34,6 +36,7 @@ from idaes.core import (
     MomentumBalanceType,
     ControlVolume0DBlock,
 )
+
 from watertap.property_models.multicomp_aq_sol_prop_pack import (
     MCASParameterBlock,
     ActivityCoefficientModel,
@@ -42,15 +45,14 @@ from watertap.property_models.multicomp_aq_sol_prop_pack import (
 )
 
 from watertap.unit_models.pressure_changer import Pump
-
 from watertap.unit_models.nanofiltration_DSPMDE_0D import (
     NanofiltrationDSPMDE0D,
     MassTransferCoefficient,
     ConcentrationPolarizationType,
 )
+
 from watertap.core.util.initialization import check_dof
 from idaes.core.util.model_statistics import degrees_of_freedom
-
 from idaes.core.solvers import get_solver
 from idaes.core.util.model_statistics import (
     number_variables,
@@ -58,6 +60,7 @@ from idaes.core.util.model_statistics import (
     number_unused_variables,
     report_statistics,
 )
+
 from idaes.core.util.model_diagnostics import DiagnosticsToolbox
 from idaes.core.util.testing import initialization_tester
 from idaes.core.util.exceptions import ConfigurationError
@@ -67,7 +70,6 @@ from idaes.models.unit_models import (
     Feed,
     Product
 )
-
 
 def main():
     solver = get_solver()
@@ -114,6 +116,7 @@ def set_default_feed(m, solver):
         flow_mass_h2o=1,   # arbitraty for now
         conc_mass_phase_comp=conc_mass_phase_comp
     )
+
 
 def define_feed_comp():
     default = {
@@ -183,29 +186,19 @@ def build():
     m.fs.nf_to_product = Arc(source=m.fs.unit.permeate, destination=m.fs.product.inlet)
     m.fs.nf_to_disposal = Arc(source=m.fs.unit.retentate, destination=m.fs.disposal.inlet)
     TransformationFactory("network.expand_arcs").apply_to(m)
-
-    # check the DOF
-    # check_dof(m, fail_flag = True)
-
-    # # calculate the scaling factors
-    # calculate_scaling_factors(m)
-    # check that all variables have scaling factors
-    # unscaled_var_list = list(unscaled_variables_generator(m.fs.unit))
-    # assert len(unscaled_var_list) == 0
-    # Expect only flux_mol_phase_comp to be poorly scaled, as we have not
-    # calculated correct values just yet.
-    # for var in list(iscale.badly_scaled_var_generator(m.fs.unit)):
-    #     assert "flux_mol_phase_comp" in var[0].name
     return m
+
 
 def fix_init_vars(m):
     # feed state variables
     m.fs.unit.feed_side.properties_in[0].temperature.fix(298.15)
     m.fs.unit.feed_side.properties_in[0].pressure.fix(2e5)
+
     # pump variables
     m.fs.pump.efficiency_pump[0].fix(0.75)
     m.fs.pump.outlet.pressure[0].fix(2e5)
     iscale.set_scaling_factor(m.fs.pump.control_volume.work, 1e-4)
+
     # membrane operation
     m.fs.unit.recovery_vol_phase[0,"Liq"].setub(0.95)
     m.fs.unit.spacer_porosity.fix(0.85)
@@ -213,9 +206,11 @@ def fix_init_vars(m):
     m.fs.unit.velocity[0, 0].fix(0.1)
     m.fs.unit.area.fix(100)
     m.fs.unit.mixed_permeate[0].pressure.fix(101325)
+
     # variables for calculating mass transfer coefficient with spiral wound correlation
     m.fs.unit.spacer_mixing_efficiency.fix()
     m.fs.unit.spacer_mixing_length.fix()
+
     # membrane properties
     m.fs.unit.radius_pore.fix(0.5e-9)
     m.fs.unit.membrane_thickness_effective.fix(1.33e-6)
@@ -223,9 +218,11 @@ def fix_init_vars(m):
     m.fs.unit.dielectric_constant_pore.fix(41.3)
     iscale.calculate_scaling_factors(m)
 
+
 def unfix_opt_vars(m):
     m.fs.pump.outlet.pressure[0].unfix()
     m.fs.unit.area.unfix()
+
 
 def add_obj(m):
     # limit Li loss
@@ -318,6 +315,7 @@ def set_NF_feed(
 def calc_scale(value):
     return -1 * floor(log(value,10))
 
+
 def set_NF_feed_scaling(blk):
     _add = 0
     for i in blk.feed.properties[0].flow_mol_phase_comp:
@@ -327,5 +325,7 @@ def set_NF_feed_scaling(blk):
             "flow_mol_phase_comp", 10 ** (scale + _add), index=i
         )
 
+
 if __name__ == "__main__":
     main()
+    
