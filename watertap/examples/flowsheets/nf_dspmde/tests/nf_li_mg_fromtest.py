@@ -98,6 +98,7 @@ def main():
 
     dt = DiagnosticsToolbox(m)
     dt.report_numerical_issues()
+    dt.report_structural_issues()
 
     return m
 
