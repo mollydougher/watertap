@@ -46,6 +46,9 @@ def main():
     optimize(m, solver)
     m.fs.unit.report()
 
+    print("Optimal area (m2)", m.fs.unit.area.value)
+    print("Optimal RO vol recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
+
     return m
 
 
