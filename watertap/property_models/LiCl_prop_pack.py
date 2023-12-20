@@ -494,7 +494,7 @@ class LiClStateBlockData(StateBlockData):
         self.flow_mass_phase_comp = Var(
             self.params.phase_list,
             self.params.component_list,
-            initialize={("Liq", "H2O"): 10.058, ("Liq", "LiCl"): 0.03158},
+            initialize={("Liq", "H2O"): 1.058, ("Liq", "LiCl"): 0.03158},
             bounds=(0.0, None),
             domain=NonNegativeReals,
             units=pyunits.kg / pyunits.s,
@@ -851,11 +851,11 @@ class LiClStateBlockData(StateBlockData):
         return self.enth_flow
 
     # TODO: make property package compatible with dynamics
-    def get_material_density_terms(self, p, j):
-        """Create material density terms."""
+    # def get_material_density_terms(self, p, j):
+    #     """Create material density terms."""
 
-    def get_enthalpy_density_terms(self, p):
-        """Create enthalpy density terms."""
+    # def get_enthalpy_density_terms(self, p):
+    #     """Create enthalpy density terms."""
 
     def default_material_balance_type(self):
         return MaterialBalanceType.componentTotal
