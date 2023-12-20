@@ -31,7 +31,7 @@ def main():
     solver = get_solver()
     m = build()
 
-    initialize(m)
+    initialize(m, solver)
     print("init_okay")
     m.fs.unit.report()
 
@@ -51,10 +51,10 @@ def main():
 
 def set_default_feed(blk):
     # mass flow rate (kg/s)
-    blk.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'LiCl'].fix(0.03158)
+    blk.feed.flow_mass_phase_comp[0, 'Liq', 'LiCl'].fix(0.03158)
         # increasing the Li ion concentration fixed the permeate initializtion fail
         # currently 10x too high for this ratio of water
-    blk.unit.inlet.flow_mass_phase_comp[0, 'Liq', 'H2O'].fix(1.058)
+    blk.feed.flow_mass_phase_comp[0, 'Liq', 'H2O'].fix(1.058)
 
     # Set scaling factors for component mass flowrates.
     blk.properties.set_default_scaling('flow_mass_phase_comp', 1, index=('Liq', 'H2O'))
@@ -66,12 +66,24 @@ def build():
     m.fs = FlowsheetBlock(dynamic=False)
     m.fs.properties = LiClParameterBlock()
 
+    # add the feed and product streams
+    m.fs.feed = Feed(property_package=m.fs.properties)
+    m.fs.permeate = Product(property_package=m.fs.properties)
+    m.fs.retentate = Product(property_package=m.fs.properties)
+
     # define unit models
     m.fs.unit = ReverseOsmosis0D(
         property_package=m.fs.properties,
         concentration_polarization_type=ConcentrationPolarizationType.none,
         mass_transfer_coefficient=MassTransferCoefficient.none,
         has_pressure_change=False)
+    
+    # connect the streams and blocks
+    m.fs.feed_to_ro = Arc(source=m.fs.feed.outlet, destination=m.fs.unit.inlet)
+    m.fs.ro_to_permeate = Arc(source=m.fs.unit.permeate, destination=m.fs.permeate.inlet)
+    m.fs.ro_to_retentate = Arc(source=m.fs.unit.retentate, destination=m.fs.retentate.inlet)
+    TransformationFactory("network.expand_arcs").apply_to(m)
+
     return(m)
 
 
@@ -109,10 +121,19 @@ def optimize(m, solver):
     return simulation_results
 
 
-def initialize(m):
+def initialize(m, solver):
     set_default_feed(m.fs)
     fix_init_vars(m)
-    m.fs.unit.initialize()
+
+    m.fs.feed.initialize(optarg=solver.options)
+    propagate_state(m.fs.feed_to_ro)
+
+    m.fs.unit.initialize(optarg=solver.options)
+    propagate_state(m.fs.ro_to_permeate)
+    propagate_state(m.fs.ro_to_retentate)
+
+    m.fs.permeate.initialize(optarg=solver.options)
+    m.fs.retentate.initialize(optarg=solver.options)
 
 
 if __name__ == "__main__":
