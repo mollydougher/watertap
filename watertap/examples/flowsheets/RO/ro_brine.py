@@ -50,6 +50,10 @@ def main():
     print("Optimal RO vol recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
     print("Optimal LiCl recovery (%)", m.fs.unit.recovery_mass_phase_comp[0,"Liq","LiCl"].value*100)
 
+    dt = DiagnosticsToolbox(m)
+    dt.report_numerical_issues()
+    dt.report_structural_issues()
+
     return m
 
 
