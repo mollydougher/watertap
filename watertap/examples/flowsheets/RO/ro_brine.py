@@ -48,6 +48,7 @@ def main():
 
     print("Optimal area (m2)", m.fs.unit.area.value)
     print("Optimal RO vol recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
+    print("Optimal lithium recovery (%)", m.fs.unit.recovery_mass_phase_comp[0,"Liq","LiCl"].value*100)
 
     return m
 
@@ -56,7 +57,7 @@ def set_default_feed(blk):
     # mass flow rate (kg/s)
     blk.feed.flow_mass_phase_comp[0, 'Liq', 'LiCl'].fix(0.03158)
         # increasing the Li ion concentration fixed the permeate initializtion fail
-        # currently 10x too high for this ratio of water
+        # currently 100x too high for this ratio of water
     blk.feed.flow_mass_phase_comp[0, 'Liq', 'H2O'].fix(1.058)
 
     # Set scaling factors for component mass flowrates.
