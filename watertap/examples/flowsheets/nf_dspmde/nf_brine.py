@@ -60,6 +60,7 @@ def main():
     print("Optimal area (m2)", m.fs.unit.area.value)
     print("Optimal NF vol recovery (%)", m.fs.unit.recovery_vol_phase[0.0, "Liq"].value*100)
     print("Optimal Li rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Li_+"].value * 100)
+    print("Optimal Mg rejection (%)", m.fs.unit.rejection_intrinsic_phase_comp[0,"Liq","Mg_2+"].value * 100)
     print("Feed Mg:Li ratio (mass)", (m.fs.feed.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024) /  (m.fs.feed.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
     print("Permeate Mg:Li ratio (mass)", (m.fs.permeate.flow_mol_phase_comp[0,"Liq","Mg_2+"].value/0.024) /  (m.fs.permeate.flow_mol_phase_comp[0,"Liq","Li_+"].value/0.0069))
 
