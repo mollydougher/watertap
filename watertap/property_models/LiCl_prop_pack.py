@@ -159,7 +159,7 @@ class LiClParameterData(PhysicalParameterBlock):
             osm_coeff_param_dict.keys(),
             domain=Reals,
             initialize=osm_coeff_param_dict,
-            units=pyunits.dimensionless,
+            units=pyunits.dimensionless, # TODO: fix units here for new osm pressure model
             doc="Osmotic coefficient parameters",
         )
 
