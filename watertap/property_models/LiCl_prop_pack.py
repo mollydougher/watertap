@@ -82,14 +82,12 @@ class LiClParameterData(PhysicalParameterBlock):
         # phases
         self.Liq = LiquidPhase()
 
-        # reference - NaCl
-        # this package is developed from Bartholomew & Mauter (2019) https://doi.org/10.1016/j.memsci.2018.11.067
-        # the enthalpy calculations are from Sharqawy et al. (2010) http://dx.doi.org/10.5004/dwt.2010.1079
         # reference - LiCl
-        # mass density, specific heat, enthalpy: Ruiqi Song et al. (2019) https://iopscience.iop.org/article/10.1088/1757-899X/562/1/012102/pdf
+        # mass density, specific heat: Ruiqi Song et al. (2019) https://iopscience.iop.org/article/10.1088/1757-899X/562/1/012102/pdf
         # dyn viscosity: Abdulagatov et al. (2006) https://www.sciencedirect.com/science/article/pii/S0167732205002102
         # diffusivity: Lobo (1993) https://www.degruyter.com/document/doi/10.1351/pac199365122613/html
         # osmotic coeff: El Guendouzi et al. (2001) https://www.sciencedirect.com/science/article/pii/S0021961400908152]
+        # TODO: add enthalpy
 
         # molecular weight
         mw_comp_data = {"H2O": 18.01528e-3, "LiCl": 42.394e-3}
@@ -846,9 +844,9 @@ class LiClStateBlockData(StateBlockData):
         """Create material flow terms for control volume."""
         return self.flow_mass_phase_comp[p, j]
 
-    def get_enthalpy_flow_terms(self, p):
-        """Create enthalpy flow terms."""
-        return self.enth_flow
+    # def get_enthalpy_flow_terms(self, p):
+    #     """Create enthalpy flow terms."""
+    #     return self.enth_flow
 
     # TODO: make property package compatible with dynamics
     # def get_material_density_terms(self, p, j):
@@ -860,8 +858,8 @@ class LiClStateBlockData(StateBlockData):
     def default_material_balance_type(self):
         return MaterialBalanceType.componentTotal
 
-    def default_energy_balance_type(self):
-        return EnergyBalanceType.enthalpyTotal
+    # def default_energy_balance_type(self):
+    #     return EnergyBalanceType.enthalpyTotal
 
     def get_material_flow_basis(self):
         return MaterialFlowBasis.mass
