@@ -53,6 +53,7 @@ def main():
     dt = DiagnosticsToolbox(m)
     dt.report_numerical_issues()
     dt.report_structural_issues()
+    dt.display_components_with_inconsistent_units()
 
     return m
 
