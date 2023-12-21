@@ -147,20 +147,55 @@ class LiClParameterData(PhysicalParameterBlock):
         )
 
         # osmotic coefficient parameters, table 11 in El Guendouzi
+        # units of inverse molality
         osm_coeff_param_dict = {
-            "0": 0.392,
-            "1": 1.2,
+            # "0": 0.392,
+            # "1": 1.2,
             "2": 0.1443,
             "3": 0.3191,
-            "4": 2,
-            "5": 0.00465
+            # "4": 2,
+            # "5": 0.00465
         }
         self.osm_coeff_param = Var(
             osm_coeff_param_dict.keys(),
             domain=Reals,
             initialize=osm_coeff_param_dict,
-            units=pyunits.dimensionless, # TODO: fix units here for new osm pressure model
-            doc="Osmotic coefficient parameters",
+            units=(pyunits.mol / pyunits.kg)**(-1),
+            doc="Osmotic coefficient parameters (m**(-1))",
+        )
+
+        # units of inverse sqrt molality
+        osm_coeff_param_dict2 = {
+            "0": 0.392,
+            "1": 1.2,
+            # "2": 0.1443,
+            # "3": 0.3191,
+            "4": 2,
+            # "5": 0.00465
+        }
+        self.osm_coeff_param2 = Var(
+            osm_coeff_param_dict2.keys(),
+            domain=Reals,
+            initialize=osm_coeff_param_dict2,
+            units=(pyunits.mol / pyunits.kg)**(-1/2),
+            doc="Osmotic coefficient parameters (m**(-1/2))",
+        )
+
+        # units of inverse molality squared
+        osm_coeff_param_dict3 = {
+            # "0": 0.392,
+            # "1": 1.2,
+            # "2": 0.1443,
+            # "3": 0.3191,
+            # "4": 2,
+            "5": 0.00465
+        }
+        self.osm_coeff_param3 = Var(
+            osm_coeff_param_dict3.keys(),
+            domain=Reals,
+            initialize=osm_coeff_param_dict3,
+            units=(pyunits.mol / pyunits.kg)**(-2),
+            doc="Osmotic coefficient parameters (m**(-2))",
         )
 
         # TODO: update variable name to "solution" not "water"
@@ -730,14 +765,13 @@ class LiClStateBlockData(StateBlockData):
 
         def rule_osm_coeff(b):              # osmotic coefficients, table 11 in El Guendouzi
             return b.osm_coeff == (
-                1 
-                - (b.params.osm_coeff_param["0"] * b.molality_phase_comp["Liq", "LiCl"]**(1/2) /
-                   (1 + b.params.osm_coeff_param["1"] * b.molality_phase_comp["Liq", "LiCl"]**(1/2)))
+                1 - (b.params.osm_coeff_param2["0"] * (b.molality_phase_comp["Liq", "LiCl"])**(1/2)) /
+                   (1 + b.params.osm_coeff_param2["1"] * (b.molality_phase_comp["Liq", "LiCl"])**(1/2))
                 + b.molality_phase_comp["Liq", "LiCl"] * (b.params.osm_coeff_param["2"] 
                                                            + (b.params.osm_coeff_param["3"] 
-                                                           * exp(-b.params.osm_coeff_param["4"]
-                                                                    * b.molality_phase_comp["Liq", "LiCl"]**(1/2))))
-                + b.molality_phase_comp["Liq", "LiCl"]**2 * b.params.osm_coeff_param["5"]
+                                                           * exp(-b.params.osm_coeff_param2["4"]
+                                                                    * (b.molality_phase_comp["Liq", "LiCl"])**(1/2))))
+                + (b.molality_phase_comp["Liq", "LiCl"])**2 * b.params.osm_coeff_param3["5"]
             )
 
         self.eq_osm_coeff = Constraint(rule=rule_osm_coeff)
@@ -745,8 +779,8 @@ class LiClStateBlockData(StateBlockData):
     def _pressure_osm_phase(self):
         self.pressure_osm_phase = Var(
             self.params.phase_list,
-            initialize=1e6,             # TODO: check these init values
-            bounds=(5e2, 5e7),          # TODO: check these init values
+            initialize=1e6,
+            bounds=(5e2, 5e7),
             units=pyunits.Pa,
             doc="Osmotic pressure",
         )
@@ -760,11 +794,11 @@ class LiClStateBlockData(StateBlockData):
                 b.pressure_osm_phase[p]
                 == i
                 * b.osm_coeff
-                * b.molality_phase_comp[p, "LiCl"]  # TODO: check if molarity or molality
-                # * rhow
+                * b.molality_phase_comp[p, "LiCl"]
+                # * rhow                            # TODO: troubleshoot init errors when including this value
                 * Constants.gas_constant
                 * b.temperature
-                / b.params.mw_comp["LiCl"]
+                / (b.params.mw_comp["LiCl"])        # TODO: troubleshoot init errors when excluding this value
             )
 
         self.eq_pressure_osm_phase = Constraint(
