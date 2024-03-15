@@ -27,6 +27,7 @@ from idaes.core import (
 
 from idaes.core.solvers import get_solver
 from idaes.core.util.initialization import propagate_state
+from idaes.core.util.model_diagnostics import DiagnosticsToolbox
 from idaes.core.util.model_statistics import degrees_of_freedom
 from idaes.models.unit_models import (
     Product,
@@ -61,8 +62,8 @@ def main():
     solver = get_solver()
     m = build()
     initialize(m, solver)
-    add_objective(m)
-    unfix_opt_vars(m)
+    # add_objective(m)
+    # unfix_opt_vars(m)
     results = optimize(m, solver)
     assert_optimal_termination(results)
     print("Optimal cost", m.fs.costing.LCOW.value)
@@ -82,6 +83,13 @@ def main():
         "Disposal hardness (mg/L as CaCO3)",
         m.fs.disposal.properties[0].total_hardness.value,
     )
+
+    dt = DiagnosticsToolbox(m)
+    dt.report_numerical_issues()
+    dt.report_structural_issues()
+    dt.display_constraints_with_large_residuals()
+    dt.display_components_with_inconsistent_units()
+
     return m
 
 
